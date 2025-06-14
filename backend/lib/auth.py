@@ -11,8 +11,8 @@ class AuthService:
     
     def __init__(self):
         self.secret_key = os.environ.get('AUTH_SECRET', 'default-secret-key')
-        self.username = os.environ.get('AUTH_USERNAME', 'arumugam')
-        self.password = os.environ.get('AUTH_PASSWORD', 'pappu')
+        self.username = os.environ.get('AUTH_USERNAME')
+        self.password = os.environ.get('AUTH_PASSWORD')
         self.algorithm = 'HS256'
         self.token_expire_hours = 24
     
