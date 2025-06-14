@@ -22,19 +22,7 @@ This backend provides REST APIs for:
 
 ```
 backend/
-├── api/                    # Vercel serverless functions
-│   ├── auth/
-│   │   └── login.py       # POST /api/auth/login
-│   ├── configurations/
-│   │   ├── index.py       # GET /api/configurations
-│   │   ├── create.py      # POST /api/configurations
-│   │   └── [id].py        # DELETE /api/configurations/[id]
-│   ├── quotations/
-│   │   ├── index.py       # GET /api/quotations
-│   │   ├── create.py      # POST /api/quotations
-│   │   ├── [id].py        # PUT/DELETE /api/quotations/[id]
-│   │   └── pdf/[id].py    # GET /api/quotations/pdf/[id]
-│   └── health.py          # GET /api/health
+├── app.py                 # Main application entry point (all endpoints)
 ├── lib/
 │   ├── auth.py            # Authentication utilities
 │   ├── storage.py         # Vercel Blob Storage utilities
@@ -42,6 +30,7 @@ backend/
 │   └── models.py          # Data models and validation
 ├── requirements.txt       # Python dependencies
 ├── vercel.json           # Vercel configuration
+├── API_DOCUMENTATION.md   # Complete API reference
 └── README.md             # This file
 ```
 
