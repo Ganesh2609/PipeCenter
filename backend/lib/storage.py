@@ -12,31 +12,39 @@ class BlobStorageService:
     def __init__(self):
         self.token = os.environ.get('BLOB_READ_WRITE_TOKEN')
         if not self.token:
-            raise ValueError("BLOB_READ_WRITE_TOKEN environment variable is required")
-        
-        self.base_url = "https://blob.vercel-storage.com"
-        self.headers = {
-            "Authorization": f"Bearer {self.token}",
-            "Content-Type": "application/json"
-        }
+            print("Warning: BLOB_READ_WRITE_TOKEN not found, using in-memory storage")
+            self.use_memory = True
+            self._memory_store = {}
+        else:
+            self.use_memory = False
     
-    async def put_blob(self, filename: str, data: str) -> bool:
+    def put_blob(self, filename: str, data: str) -> bool:
         """Upload data to Vercel Blob Storage"""
-        try:
-            url = f"{self.base_url}/put"
-            files = {"file": (filename, data, "application/json")}
-            headers = {"Authorization": f"Bearer {self.token}"}
+        if self.use_memory:
+            self._memory_store[filename] = data
+            return True
             
-            response = requests.post(url, files=files, headers=headers)
-            return response.status_code == 200
+        try:
+            # Correct Vercel Blob API usage
+            url = f"https://blob.vercel-storage.com/{filename}"
+            headers = {
+                "Authorization": f"Bearer {self.token}",
+                "Content-Type": "application/json"
+            }
+            
+            response = requests.put(url, data=data, headers=headers)
+            return response.status_code in [200, 201]
         except Exception as e:
             print(f"Error uploading to blob storage: {e}")
             return False
     
-    async def get_blob(self, filename: str) -> Optional[str]:
+    def get_blob(self, filename: str) -> Optional[str]:
         """Download data from Vercel Blob Storage"""
+        if self.use_memory:
+            return self._memory_store.get(filename)
+            
         try:
-            url = f"{self.base_url}/get/{filename}"
+            url = f"https://blob.vercel-storage.com/{filename}"
             headers = {"Authorization": f"Bearer {self.token}"}
             
             response = requests.get(url, headers=headers)
@@ -51,10 +59,16 @@ class BlobStorageService:
             print(f"Error downloading from blob storage: {e}")
             return None
     
-    async def delete_blob(self, filename: str) -> bool:
+    def delete_blob(self, filename: str) -> bool:
         """Delete file from Vercel Blob Storage"""
+        if self.use_memory:
+            if filename in self._memory_store:
+                del self._memory_store[filename]
+                return True
+            return False
+            
         try:
-            url = f"{self.base_url}/delete/{filename}"
+            url = f"https://blob.vercel-storage.com/{filename}"
             headers = {"Authorization": f"Bearer {self.token}"}
             
             response = requests.delete(url, headers=headers)
@@ -64,10 +78,10 @@ class BlobStorageService:
             return False
 
     # Configuration methods
-    async def get_configurations(self) -> List[Configuration]:
+    def get_configurations(self) -> List[Configuration]:
         """Get all configurations from blob storage"""
         try:
-            data = await self.get_blob("configurations.json")
+            data = self.get_blob("configurations.json")
             if not data:
                 return []
             
@@ -91,22 +105,22 @@ class BlobStorageService:
             print(f"Error loading configurations: {e}")
             return []
     
-    async def save_configurations(self, configurations: List[Configuration]) -> bool:
+    def save_configurations(self, configurations: List[Configuration]) -> bool:
         """Save configurations to blob storage"""
         try:
             # Convert to dict format for JSON serialization
             configs_data = [config.dict() for config in configurations]
             data = json.dumps(configs_data, indent=2)
-            return await self.put_blob("configurations.json", data)
+            return self.put_blob("configurations.json", data)
         except Exception as e:
             print(f"Error saving configurations: {e}")
             return False
     
     # Quotation methods
-    async def get_quotations(self) -> List[Quotation]:
+    def get_quotations(self) -> List[Quotation]:
         """Get all quotations from blob storage with 30-day cleanup"""
         try:
-            data = await self.get_blob("quotations.json")
+            data = self.get_blob("quotations.json")
             if not data:
                 return []
             
@@ -136,27 +150,27 @@ class BlobStorageService:
             
             # Save cleaned data if cleanup was needed
             if cleanup_needed:
-                await self.save_quotations(valid_quotations)
+                self.save_quotations(valid_quotations)
             
             return valid_quotations
         except Exception as e:
             print(f"Error loading quotations: {e}")
             return []
     
-    async def save_quotations(self, quotations: List[Quotation]) -> bool:
+    def save_quotations(self, quotations: List[Quotation]) -> bool:
         """Save quotations to blob storage"""
         try:
             # Convert to dict format for JSON serialization
             quotations_data = [quotation.dict() for quotation in quotations]
             data = json.dumps(quotations_data, indent=2)
-            return await self.put_blob("quotations.json", data)
+            return self.put_blob("quotations.json", data)
         except Exception as e:
             print(f"Error saving quotations: {e}")
             return False
     
-    async def get_quotation_by_id(self, quotation_id: str) -> Optional[Quotation]:
+    def get_quotation_by_id(self, quotation_id: str) -> Optional[Quotation]:
         """Get a specific quotation by ID"""
-        quotations = await self.get_quotations()
+        quotations = self.get_quotations()
         for quotation in quotations:
             if quotation.id == quotation_id:
                 return quotation
