@@ -4,12 +4,7 @@
       "runtime": "python3.9"
     }
   },
-  "env": {
-    "BLOB_READ_WRITE_TOKEN": "@blob-token",
-    "AUTH_SECRET": "@auth-secret",
-    "AUTH_USERNAME": "arumugam",
-    "AUTH_PASSWORD": "pappu"
-  },
+  "buildCommand": "pip install -r requirements.txt",
   "headers": [
     {
       "source": "/api/(.*)",
